@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-load_dotenv()  # ← loads .env from project root for local dev
+load_dotenv()
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,14 +12,11 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Serve frontend (relative path)
-app.mount("/", StaticFiles(directory="../frontend", html=True), name="static")
 
 class Idea(BaseModel):
     name: str
@@ -29,3 +26,6 @@ class Idea(BaseModel):
 @app.post("/api/submit")
 async def submit_idea(idea: Idea):
     return await process_idea(idea.dict())
+
+# ⬇️ MOUNT STATIC FILES AT THE VERY END
+app.mount("/", StaticFiles(directory="../frontend", html=True), name="static")
