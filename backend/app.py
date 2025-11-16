@@ -1,31 +1,51 @@
-from dotenv import load_dotenv
-load_dotenv()
+import httpx
+from anthropic import Anthropic
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
-import os
-from utils import process_idea
+async def process_idea(data):
+    client = Anthropic(api_key=ANTHROPIC_API_KEY)
 
-app = FastAPI()
+    # Generate AI summary
+    summary_prompt = f"Summarize this idea: {data['feedback']}"
+    sentiment_prompt = f"Provide overall sentiment (positive, neutral, negative) and an emoji: {data['feedback']}"
+    idea_emoji_prompt = f"Give one emoji that represents this idea: {data['title']}"
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+    ai_summary = client.messages.create(
+        model="claude-3-haiku-20240307",
+        max_tokens=150,
+        messages=[{"role": "user", "content": summary_prompt}],
+    ).content[0].text
 
-class Idea(BaseModel):
-    name: str
-    title: str
-    feedback: str
+    ai_sentiment = client.messages.create(
+        model="claude-3-haiku-20240307",
+        max_tokens=50,
+        messages=[{"role": "user", "content": sentiment_prompt}],
+    ).content[0].text
 
-@app.post("/api/submit")
-async def submit_idea(idea: Idea):
-    return await process_idea(idea.dict())
+    ai_idea_emoji = client.messages.create(
+        model="claude-3-haiku-20240307",
+        max_tokens=5,
+        messages=[{"role": "user", "content": idea_emoji_prompt}],
+    ).content[0].text
 
-# ⬇️ MOUNT STATIC FILES AT THE VERY END
-app.mount("/", StaticFiles(directory="../frontend", html=True), name="static")
+    # Save to Supabase
+    supabase.table("ideas").insert({
+        "name": data["name"],
+        "title": data["title"],
+        "feedback": data["feedback"],
+        "ai_summary": ai_summary,
+        "ai_sentiment": ai_sentiment,
+        "ai_sentiment_emoji": ai_sentiment,
+        "ai_idea_emoji": ai_idea_emoji
+    }).execute()
+
+    # Discord webhook
+    async with httpx.AsyncClient() as client_http:
+        await client_http.post(DISCORD_WEBHOOK, json={
+            "content": f"New idea submitted:\n**{data['title']}** by **{data['name']}**"
+        })
+
+    return {
+        "summary": ai_summary,
+        "sentiment": ai_sentiment,
+        "emoji": ai_idea_emoji
+    }
