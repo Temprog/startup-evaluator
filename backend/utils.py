@@ -1,6 +1,9 @@
-import os, httpx, json
+import os
+import json
+import httpx
 from supabase import create_client, Client
 
+# Environment variables
 SUPABASE_URL = os.environ["SUPABASE_URL"]
 SUPABASE_KEY = os.environ["SUPABASE_KEY"]
 DISCORD_WEBHOOK = os.environ["DISCORD_WEBHOOK"]
@@ -10,10 +13,10 @@ ANTHROPIC_API_KEY = os.environ["ANTHROPIC_API_KEY"]
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 async def process_idea(data):
+    # Example AI call (Anthropic)
     prompt = f"Analyze this startup idea:\n{json.dumps(data)}"
     headers = {"Authorization": f"Bearer {ANTHROPIC_API_KEY}"}
 
-    # Call AI model
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.post(
             "https://api.anthropic.com/v1/complete",
@@ -24,9 +27,9 @@ async def process_idea(data):
                 "max_tokens_to_sample": 300
             }
         )
-        ai_result = resp.json()  # You can extract ai_summary etc. from ai_result
+        ai_result = resp.json()  # extract AI result
 
-    # TODO: Replace these with real values from ai_result
+    # Example placeholders for AI-extracted fields
     ai_summary = ai_result.get("completion", "")
     ai_sentiment = "neutral"
     ai_sentiment_emoji = "😐"
@@ -43,7 +46,7 @@ async def process_idea(data):
         "ai_idea_emoji": ai_idea_emoji
     }).execute()
 
-    # Send Discord webhook
+    # ✅ Correct async Discord webhook call
     async with httpx.AsyncClient() as client:
         await client.post(DISCORD_WEBHOOK, json={
             "content": f"New idea submitted:\n**{data['title']}** by **{data['name']}**"
