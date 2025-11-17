@@ -31,7 +31,7 @@ class Idea(BaseModel):
     feedback: str
 
 # Endpoint to submit ideas
-@app.post("/submit")
+@app.post("/api/submit")
 async def submit_idea(idea: Idea):
     """
     Process a new startup idea using utils.process_idea().
