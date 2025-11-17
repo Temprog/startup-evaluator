@@ -5,6 +5,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from supabase import create_client, Client
 from utils import process_idea  # utils.py is in the same folder as app.py
+from backend.utils import process_idea
+
 
 # Load environment variables
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
