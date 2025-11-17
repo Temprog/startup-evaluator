@@ -3,9 +3,10 @@ import json
 import httpx
 from supabase import create_client, Client
 
-# Environment variables
+# Load environment variables
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK")
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 
 # Initialize Supabase client
@@ -14,9 +15,12 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 async def process_idea(data: dict):
     """
     Process a new startup idea:
-    1. Call AI (Claude 3)
+    1. Call AI (Anthropic Claude 3)
     2. Save idea + AI results to Supabase
+    3. Notify Discord webhook
+    Returns JSON with status and AI result or error info
     """
+
     ai_result = {}
     ai_summary = ""
     ai_sentiment = "neutral"
@@ -55,6 +59,17 @@ async def process_idea(data: dict):
         }).execute()
     except Exception as e:
         return {"status": "error", "step": "Supabase insert", "error": str(e)}
+
+    # 3️⃣ Notify Discord webhook (async-safe)
+    try:
+        if DISCORD_WEBHOOK:
+            async with httpx.AsyncClient(timeout=10) as client:
+                await client.post(DISCORD_WEBHOOK, json={
+                    "content": f"New idea submitted:\n**{data['title']}** by **{data['name']}**"
+                })
+    except Exception:
+        # Ignore Discord errors so the app still works
+        pass
 
     # ✅ Success
     return {
