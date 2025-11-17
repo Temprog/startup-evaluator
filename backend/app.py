@@ -1,6 +1,8 @@
 import os
 import json
 import httpx
+from fastapi import FastAPI, Request
+from pydantic import BaseModel
 from supabase import create_client, Client
 
 # Load environment variables
@@ -12,15 +14,17 @@ ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 # Initialize Supabase client
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-async def process_idea(data: dict):
-    """
-    Process a new startup idea:
-    1. Call AI (Anthropic Claude 3)
-    2. Save idea + AI results to Supabase
-    3. Notify Discord webhook
-    Returns JSON with status and AI result or error info
-    """
+# Create FastAPI app
+app = FastAPI()
 
+# Define request schema
+class Idea(BaseModel):
+    name: str
+    title: str
+    feedback: str
+
+@app.post("/submit")
+async def submit_idea(idea: Idea):
     ai_summary = ""
     ai_sentiment = "neutral"
     ai_sentiment_emoji = "😐"
@@ -28,7 +32,7 @@ async def process_idea(data: dict):
 
     # 1️⃣ Call AI
     try:
-        prompt = f"Analyze this startup idea:\n{json.dumps(data)}"
+        prompt = f"Analyze this startup idea:\n{json.dumps(idea.dict())}"
         headers = {"Authorization": f"Bearer {ANTHROPIC_API_KEY}"}
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(
@@ -48,9 +52,9 @@ async def process_idea(data: dict):
     # 2️⃣ Save to Supabase
     try:
         supabase.table("ideas").insert({
-            "name": data["name"],
-            "title": data["title"],
-            "feedback": data["feedback"],
+            "name": idea.name,
+            "title": idea.title,
+            "feedback": idea.feedback,
             "ai_summary": ai_summary,
             "ai_sentiment": ai_sentiment,
             "ai_sentiment_emoji": ai_sentiment_emoji,
@@ -63,7 +67,7 @@ async def process_idea(data: dict):
     try:
         async with httpx.AsyncClient() as client:
             await client.post(DISCORD_WEBHOOK, json={
-                "content": f"New idea submitted:\n**{data['title']}** by **{data['name']}**"
+                "content": f"New idea submitted:\n**{idea.title}** by **{idea.name}**"
             })
     except Exception as e:
         return {"status": "error", "step": "Discord webhook", "error": str(e)}
