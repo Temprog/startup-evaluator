@@ -3,7 +3,7 @@ import json
 import httpx
 from supabase import create_client, Client
 
-# Load environment variables from Render / .env
+# Load environment variables
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK")
