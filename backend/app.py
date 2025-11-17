@@ -1,38 +1,79 @@
-from dotenv import load_dotenv
-load_dotenv()  # Loads .env locally or from Render environment
+import os
+import json
+import httpx
+from supabase import create_client, Client
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
-from utils import process_idea  # Our corrected utils.py
+# Load environment variables
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK")
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 
-app = FastAPI()  # Top-level 'app' required by uvicorn
+# Initialize Supabase client
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# CORS for frontend requests
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Change to your frontend domain in production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Pydantic model for form submission
-class Idea(BaseModel):
-    name: str
-    title: str
-    feedback: str
-
-# POST route to process ideas
-@app.post("/api/submit")
-async def submit_idea(idea: Idea):
+async def process_idea(data: dict):
     """
-    Receives a new idea, processes it asynchronously (AI, Supabase, Discord)
-    and returns a JSON response with the results or errors.
+    Process a new startup idea:
+    1. Call AI (Anthropic Claude 3)
+    2. Save idea + AI results to Supabase
+    3. Notify Discord webhook
+    Returns JSON with status and AI result or error info
     """
-    return await process_idea(idea.dict())
 
-# Serve frontend at root
-# Update this path depending on where your frontend is located relative to app.py
-app.mount("/", StaticFiles(directory="frontend", html=True), name="static")
+    ai_summary = ""
+    ai_sentiment = "neutral"
+    ai_sentiment_emoji = "😐"
+    ai_idea_emoji = "💡"
+
+    # 1️⃣ Call AI
+    try:
+        prompt = f"Analyze this startup idea:\n{json.dumps(data)}"
+        headers = {"Authorization": f"Bearer {ANTHROPIC_API_KEY}"}
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(
+                "https://api.anthropic.com/v1/complete",
+                headers=headers,
+                json={
+                    "model": "claude-3",
+                    "prompt": prompt,
+                    "max_tokens_to_sample": 300
+                }
+            )
+            ai_result = resp.json()
+            ai_summary = ai_result.get("completion", "")
+    except Exception as e:
+        return {"status": "error", "step": "AI call", "error": str(e)}
+
+    # 2️⃣ Save to Supabase
+    try:
+        supabase.table("ideas").insert({
+            "name": data["name"],
+            "title": data["title"],
+            "feedback": data["feedback"],
+            "ai_summary": ai_summary,
+            "ai_sentiment": ai_sentiment,
+            "ai_sentiment_emoji": ai_sentiment_emoji,
+            "ai_idea_emoji": ai_idea_emoji
+        }).execute()
+    except Exception as e:
+        return {"status": "error", "step": "Supabase insert", "error": str(e)}
+
+    # 3️⃣ Notify Discord webhook
+    try:
+        async with httpx.AsyncClient() as client:
+            await client.post(DISCORD_WEBHOOK, json={
+                "content": f"New idea submitted:\n**{data['title']}** by **{data['name']}**"
+            })
+    except Exception as e:
+        return {"status": "error", "step": "Discord webhook", "error": str(e)}
+
+    # ✅ Success
+    return {
+        "status": "success",
+        "ai_summary": ai_summary,
+        "ai_sentiment": ai_sentiment,
+        "ai_sentiment_emoji": ai_sentiment_emoji,
+        "ai_idea_emoji": ai_idea_emoji,
+        "ai_result": ai_result
+    }
