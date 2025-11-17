@@ -1,11 +1,10 @@
 import os
 import json
-import httpx
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from supabase import create_client, Client
-from utils import process_idea  # Make sure utils.py is corrected
+from utils import process_idea  # make sure utils.py is in backend/
 
 # Load environment variables
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
@@ -18,7 +17,8 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 # Create FastAPI app
 app = FastAPI()
 
-# Serve frontend
+# Mount frontend static files
+# Adjust path if frontend is outside backend
 app.mount("/", StaticFiles(directory="../frontend", html=True), name="frontend")
 
 # Define request schema
@@ -27,8 +27,12 @@ class Idea(BaseModel):
     title: str
     feedback: str
 
-@app.post("/api/submit")
+# API route
+@app.post("/submit")
 async def submit_idea(idea: Idea):
-    # Call the corrected process_idea function from utils.py
-    result = await process_idea(idea.dict())
-    return result
+    try:
+        # Call your utils.py function
+        result = await process_idea(idea.dict())
+        return result
+    except Exception as e:
+        return {"status": "error", "step": "submit_idea", "error": str(e)}
