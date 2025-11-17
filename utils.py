@@ -3,70 +3,49 @@ import json
 import httpx
 from supabase import create_client, Client
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-DISCORD_WEBHOOK = os.getenv("DISCORD_WEBHOOK")
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+# Environment variables
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK")
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 
+# Initialize Supabase client
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-
 async def process_idea(data: dict):
+    """
+    Process a startup idea:
+    1. Call AI (Claude 3)
+    2. Save to Supabase
+    3. Notify Discord (optional)
+    """
+
     ai_summary = ""
     ai_sentiment = "neutral"
     ai_sentiment_emoji = "😐"
     ai_idea_emoji = "💡"
     ai_result = {}
 
-    # -------------------------------
-    # 1️⃣ AI CALL (Anthropic Claude 3)
-    # -------------------------------
+    # 1️⃣ Call Claude 3
     try:
-        prompt = (
-            "Analyze the following startup idea. "
-            "Return JSON with two fields: 'summary' and 'sentiment' "
-            "(sentiment = positive, neutral, or negative). "
-            f"\nIdea:\n{json.dumps(data)}"
-        )
-
-        headers = {
-            "Authorization": f"Bearer {ANTHROPIC_API_KEY}",
-            "Content-Type": "application/json"
-        }
-
+        prompt = f"Analyze this startup idea:\n{json.dumps(data)}"
+        headers = {"Authorization": f"Bearer {ANTHROPIC_API_KEY}"}
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(
-                "https://api.anthropic.com/v1/messages",
+                "https://api.anthropic.com/v1/complete",
                 headers=headers,
                 json={
-                    "model": "claude-3-opus-20240229",
-                    "max_tokens": 300,
-                    "messages": [{"role": "user", "content": prompt}]
+                    "model": "claude-3",
+                    "prompt": prompt,
+                    "max_tokens_to_sample": 300
                 }
             )
-
-        ai_result = resp.json()
-        text = ai_result["content"][0]["text"]
-
-        # Extract summary + sentiment safely
-        ai_summary = text
-
-        if "positive" in text.lower():
-            ai_sentiment = "positive"
-            ai_sentiment_emoji = "😊"
-        elif "negative" in text.lower():
-            ai_sentiment = "negative"
-            ai_sentiment_emoji = "😞"
-        else:
-            ai_sentiment = "neutral"
-            ai_sentiment_emoji = "😐"
-
+            ai_result = resp.json()
+            ai_summary = ai_result.get("completion", "")  # ✅ fixed
     except Exception as e:
         return {"status": "error", "step": "AI", "error": str(e)}
 
-    # ------------------------------------
-    # 2️⃣ SAVE TO SUPABASE
-    # ------------------------------------
+    # 2️⃣ Save to Supabase
     try:
         supabase.table("ideas").insert({
             "name": data["name"],
@@ -78,25 +57,18 @@ async def process_idea(data: dict):
             "ai_idea_emoji": ai_idea_emoji
         }).execute()
     except Exception as e:
-        return {"status": "error", "step": "supabase", "error": str(e)}
+        return {"status": "error", "step": "Supabase insert", "error": str(e)}
 
-    # ------------------------------------
-    # 3️⃣ DISCORD NOTIFICATION
-    # (Correct async — FIXED)
-    # ------------------------------------
-    try:
-        if DISCORD_WEBHOOK:
+    # 3️⃣ Notify Discord webhook (optional)
+    if DISCORD_WEBHOOK:
+        try:
             async with httpx.AsyncClient() as client:
                 await client.post(DISCORD_WEBHOOK, json={
-                    "content": f"💡 New Idea Submitted!\n**{data['title']}** by **{data['name']}**"
+                    "content": f"New idea submitted:\n**{data['title']}** by **{data['name']}**"
                 })
-    except Exception as e:
-        # Discord error should NOT break the app
-        print("Discord webhook failed:", e)
+        except Exception as e:
+            return {"status": "error", "step": "Discord webhook", "error": str(e)}
 
-    # ------------------------------------
-    # 4️⃣ RETURN DATA
-    # ------------------------------------
     return {
         "status": "success",
         "ai_summary": ai_summary,
