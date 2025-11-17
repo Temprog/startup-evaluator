@@ -1,11 +1,12 @@
 import os
 import json
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from supabase import create_client, Client
-from utils import process_idea  # utils.py is in the same folder as app.py
-from backend.utils import process_idea
+from .utils import process_idea
+
 
 
 # Load environment variables
@@ -20,7 +21,8 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 app = FastAPI()
 
 # Mount frontend
-app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
+app.mount("/", StaticFiles(directory="backend/frontend", html=True), name="frontend")
+
 
 # Define request schema
 class Idea(BaseModel):
