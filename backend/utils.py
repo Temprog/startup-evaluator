@@ -3,31 +3,15 @@ import json
 import httpx
 from supabase import create_client, Client
 
-# Load environment variables
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK")
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 
-# Initialize Supabase client
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-async def process_idea(data: dict):
-    """
-    Process a new startup idea:
-    1. Call AI (Anthropic Claude 3)
-    2. Save idea + AI results to Supabase
-    3. Notify Discord webhook
-    Returns JSON with status and AI result or error info
-    """
-
-    ai_result = {}
+async def process_idea(data):
+    # 1️⃣ AI call
     ai_summary = ""
-    ai_sentiment = "neutral"
-    ai_sentiment_emoji = "😐"
-    ai_idea_emoji = "💡"
-
-    # 1️⃣ Call AI
     try:
         prompt = f"Analyze this startup idea:\n{json.dumps(data)}"
         headers = {"Authorization": f"Bearer {ANTHROPIC_API_KEY}"}
@@ -44,39 +28,15 @@ async def process_idea(data: dict):
             ai_result = resp.json()
             ai_summary = ai_result.get("completion", "")
     except Exception as e:
-        return {"status": "error", "step": "AI call", "error": str(e)}
+        return {"error": str(e)}
 
-    # 2️⃣ Save to Supabase
-    try:
-        supabase.table("ideas").insert({
-            "name": data["name"],
-            "title": data["title"],
-            "feedback": data["feedback"],
-            "ai_summary": ai_summary,
-            "ai_sentiment": ai_sentiment,
-            "ai_sentiment_emoji": ai_sentiment_emoji,
-            "ai_idea_emoji": ai_idea_emoji
-        }).execute()
-    except Exception as e:
-        return {"status": "error", "step": "Supabase insert", "error": str(e)}
+    # 2️⃣ Save to supabase
+    supabase.table("ideas").insert({
+        "name": data["name"],
+        "title": data["title"],
+        "feedback": data["feedback"],
+        "ai_summary": ai_summary
+    }).execute()
 
-    # 3️⃣ Notify Discord webhook (async-safe)
-    try:
-        if DISCORD_WEBHOOK:
-            async with httpx.AsyncClient(timeout=10) as client:
-                await client.post(DISCORD_WEBHOOK, json={
-                    "content": f"New idea submitted:\n**{data['title']}** by **{data['name']}**"
-                })
-    except Exception:
-        # Ignore Discord errors so the app still works
-        pass
-
-    # ✅ Success
-    return {
-        "status": "success",
-        "ai_summary": ai_summary,
-        "ai_sentiment": ai_sentiment,
-        "ai_sentiment_emoji": ai_sentiment_emoji,
-        "ai_idea_emoji": ai_idea_emoji,
-        "ai_result": ai_result
-    }
+    # 3️⃣ No Discord call
+    return {"ai_summary": ai_summary}
