@@ -10,6 +10,10 @@ from utils import process_idea  # utils.py must be at repo root
 # 1️⃣ Create FastAPI instance
 app = FastAPI()  # Must be top-level 'app'
 
+# Serve frontend at root
+app.mount("/", StaticFiles(directory="frontend", html=True), name="static")
+
+
 # 2️⃣ Add CORS middleware for frontend requests
 app.add_middleware(
     CORSMiddleware,
