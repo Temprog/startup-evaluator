@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from supabase import create_client, Client
-from utils import process_idea  # make sure utils.py is in backend/
+from utils import process_idea  # utils.py is in the same folder as app.py
 
 # Load environment variables
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
@@ -14,12 +14,11 @@ ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 # Initialize Supabase client
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# Create FastAPI app
+# Initialize FastAPI
 app = FastAPI()
 
-# Mount frontend static files
-# Adjust path if frontend is outside backend
-app.mount("/", StaticFiles(directory="../frontend", html=True), name="frontend")
+# Mount frontend
+app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
 
 # Define request schema
 class Idea(BaseModel):
@@ -27,11 +26,14 @@ class Idea(BaseModel):
     title: str
     feedback: str
 
-# API route
+# Endpoint to submit ideas
 @app.post("/submit")
 async def submit_idea(idea: Idea):
+    """
+    Process a new startup idea using utils.process_idea().
+    Returns a JSON response with status and AI result.
+    """
     try:
-        # Call your utils.py function
         result = await process_idea(idea.dict())
         return result
     except Exception as e:
