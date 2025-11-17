@@ -3,7 +3,7 @@ import json
 import httpx
 from supabase import create_client, Client
 
-# Load environment variables
+# Load environment variables from Render
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK")
@@ -11,6 +11,19 @@ ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 
 # Initialize Supabase client
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+
+async def notify_discord(title: str, name: str):
+    """Send new idea notification to Discord webhook"""
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            await client.post(
+                DISCORD_WEBHOOK,
+                json={"content": f"New idea submitted:\n**{title}** by **{name}**"}
+            )
+    except Exception as e:
+        print(f"[Discord webhook error]: {e}")
+
 
 async def process_idea(data: dict):
     """
@@ -21,16 +34,17 @@ async def process_idea(data: dict):
     Returns JSON with status and AI result or error info
     """
 
-    ai_result = {}
     ai_summary = ""
     ai_sentiment = "neutral"
     ai_sentiment_emoji = "😐"
     ai_idea_emoji = "💡"
+    ai_result = {}
 
-    # 1️⃣ Call AI
+    # 1️⃣ Call AI (Anthropic)
     try:
         prompt = f"Analyze this startup idea:\n{json.dumps(data)}"
         headers = {"Authorization": f"Bearer {ANTHROPIC_API_KEY}"}
+
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(
                 "https://api.anthropic.com/v1/complete",
@@ -42,7 +56,6 @@ async def process_idea(data: dict):
                 }
             )
             ai_result = resp.json()
-            # Simple placeholder parsing
             ai_summary = ai_result.get("completion", "")
     except Exception as e:
         return {"status": "error", "step": "AI call", "error": str(e)}
@@ -61,12 +74,9 @@ async def process_idea(data: dict):
     except Exception as e:
         return {"status": "error", "step": "Supabase insert", "error": str(e)}
 
-    # 3️⃣ Notify Discord webhook
+    # 3️⃣ Notify Discord
     try:
-        async with httpx.AsyncClient() as client:
-            await client.post(DISCORD_WEBHOOK, json={
-                "content": f"New idea submitted:\n**{data['title']}** by **{data['name']}**"
-            })
+        await notify_discord(data["title"], data["name"])
     except Exception as e:
         return {"status": "error", "step": "Discord webhook", "error": str(e)}
 
