@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from supabase import create_client, Client
 from .utils import process_idea
+from fastapi.responses import FileResponse
 
 # Load environment variables
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
