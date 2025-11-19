@@ -16,15 +16,17 @@ body {
 .page-header {
   text-align: center;
   font-size: 2rem;
+  color: #000; /* black */
+  margin-top: 40px; /* increased top margin */
   margin-bottom: 20px;
 }
 
 .container {
-  max-width: 800px;
+  max-width: 700px; /* slightly reduced width */
   margin: auto;
   background: #fff;
-  padding: 25px;
-  border-radius: 12px;
+  padding: 30px;
+  border-radius: 16px; /* increased border radius */
   box-shadow: 0 5px 20px rgba(0,0,0,0.1);
 }
 
@@ -32,9 +34,10 @@ form input, form textarea {
   width: 100%;
   padding: 12px;
   margin-bottom: 15px;
-  border-radius: 6px;
+  border-radius: 10px; /* slightly increased */
   border: 1px solid #ccc;
   font-size: 16px;
+  color: #222; /* darker text */
 }
 
 .row {
@@ -58,7 +61,7 @@ button {
   padding: 12px;
   width: 100%;
   border: none;
-  border-radius: 6px;
+  border-radius: 10px; /* slightly increased */
   cursor: pointer;
   transition: background 0.3s ease;
 }
@@ -75,9 +78,9 @@ button:hover:not(:disabled) {
 /* Result box */
 #result {
   margin-top: 20px;
-  padding: 15px;
+  padding: 20px;
   background: #f0f4ff;
-  border-radius: 8px;
+  border-radius: 12px; /* slightly increased */
   white-space: pre-wrap;
   line-height: 1.4;
 }
@@ -93,6 +96,6 @@ button:hover:not(:disabled) {
 #result pre {
   background: #e8ecff;
   padding: 12px;
-  border-radius: 6px;
+  border-radius: 10px; /* slightly increased */
   overflow-x: auto;
 }
