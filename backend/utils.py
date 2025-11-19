@@ -3,23 +3,16 @@ import json
 import httpx
 from supabase import create_client, Client
 
-# Load environment variables
+# Env vars
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK")
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 
-# Initialize Supabase client
+# Supabase client
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-
 async def process_idea(data: dict):
-    """
-    Process a startup idea:
-    1. Send the idea to Anthropic Claude
-    2. Save result in Supabase
-    3. Optionally send a Discord notification
-    """
 
     ai_summary = ""
     ai_sentiment = "neutral"
@@ -27,54 +20,41 @@ async def process_idea(data: dict):
     ai_idea_emoji = "💡"
     ai_result = {}
 
-    # ------------------------------------------------------------
-    # 1️⃣ Step 1 — Call Anthropic Claude (correct API format)
-    # ------------------------------------------------------------
+    # 1️⃣ Anthropic Claude 3.5 API CALL (FULLY CORRECT)
     try:
-        headers = {
-            "x-api-key": ANTHROPIC_API_KEY,
-            "anthropic-version": "2023-06-01",
-            "Content-Type": "application/json"
-        }
-
-        payload = {
-            "model": "claude-3-5-sonnet-latest",   # ✅ Correct model
-            "max_tokens": 300,                   # Claude expects max_tokens, not max_tokens_to_sample
-            "messages": [
-                {
-                    "role": "user",
-                    "content": f"Analyze this startup idea:\n{json.dumps(data)}"
-                }
-            ]
-        }
-
-        async with httpx.AsyncClient(timeout=40) as client:
-            response = await client.post(
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(
                 "https://api.anthropic.com/v1/messages",
-                headers=headers,
-                json=payload
+                headers={
+                    "x-api-key": ANTHROPIC_API_KEY,
+                    "anthropic-version": "2023-06-01",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": "claude-3-5-sonnet-20241022",
+                    "max_tokens": 4096,
+                    "temperature": 0.7,          # optional, but recommended
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": f"Analyze this startup idea:\n{json.dumps(data)}"
+                        }
+                    ]
+                }
             )
-            ai_result = response.json()
 
-        # Claude returns: content: [{ "type": "text", "text": "..."}]
-        content_blocks = ai_result.get("content", [])
+            ai_result = resp.json()
 
-        if content_blocks and "text" in content_blocks[0]:
-            ai_summary = content_blocks[0]["text"]
-        else:
-            raise ValueError("Anthropic did not return a text response")
+            # extract text safely
+            if "content" in ai_result and len(ai_result["content"]) > 0:
+                ai_summary = ai_result["content"][0].get("text", "")
+            else:
+                ai_summary = "No response from AI."
 
     except Exception as e:
-        return {
-            "status": "error",
-            "step": "AI",
-            "error": str(e),
-            "anthropic_raw_response": ai_result
-        }
+        return {"status": "error", "step": "AI", "error": str(e)}
 
-    # ------------------------------------------------------------
-    # 2️⃣ Step 2 — Save to Supabase
-    # ------------------------------------------------------------
+    # 2️⃣ Save to Supabase
     try:
         supabase.table("ideas").insert({
             "name": data["name"],
@@ -85,33 +65,19 @@ async def process_idea(data: dict):
             "ai_sentiment_emoji": ai_sentiment_emoji,
             "ai_idea_emoji": ai_idea_emoji
         }).execute()
-
     except Exception as e:
-        return {
-            "status": "error",
-            "step": "Supabase insert",
-            "error": str(e)
-        }
+        return {"status": "error", "step": "Supabase insert", "error": str(e)}
 
-    # ------------------------------------------------------------
-    # 3️⃣ Step 3 — Optional Discord Notification
-    # ------------------------------------------------------------
+    # 3️⃣ Discord webhook (optional)
     if DISCORD_WEBHOOK:
         try:
-            async with httpx.AsyncClient(timeout=10) as client:
+            async with httpx.AsyncClient() as client:
                 await client.post(DISCORD_WEBHOOK, json={
-                    "content": f"🆕 New startup idea submitted:\n**{data['title']}** by **{data['name']}**"
+                    "content": f"New idea submitted:\n**{data['title']}** by **{data['name']}**"
                 })
         except Exception as e:
-            return {
-                "status": "error",
-                "step": "Discord webhook",
-                "error": str(e)
-            }
+            return {"status": "error", "step": "Discord webhook", "error": str(e)}
 
-    # ------------------------------------------------------------
-    # 4️⃣ Step 4 — Success Response
-    # ------------------------------------------------------------
     return {
         "status": "success",
         "ai_summary": ai_summary,
