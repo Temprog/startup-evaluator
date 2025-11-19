@@ -12,6 +12,13 @@ body {
   padding: 20px;
 }
 
+/* Page header outside the card */
+.page-header {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 20px;
+}
+
 .container {
   max-width: 800px;
   margin: auto;
@@ -19,12 +26,6 @@ body {
   padding: 25px;
   border-radius: 12px;
   box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-}
-
-h1 {
-  text-align: center;
-  margin-bottom: 25px;
-  font-size: 2rem;
 }
 
 form input, form textarea {
@@ -71,18 +72,27 @@ button:hover:not(:disabled) {
   background: #574fcf;
 }
 
+/* Result box */
 #result {
-  margin-top: 25px;
+  margin-top: 20px;
   padding: 15px;
   background: #f0f4ff;
   border-radius: 8px;
   white-space: pre-wrap;
+  line-height: 1.4;
 }
 
 #result h2 {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 #result p {
-  margin-bottom: 8px;
+  margin-bottom: 6px; /* slightly reduced spacing */
+}
+
+#result pre {
+  background: #e8ecff;
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
 }
