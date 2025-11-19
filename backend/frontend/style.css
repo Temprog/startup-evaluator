@@ -1,81 +1,93 @@
-/* Base body */
+/* General page styling */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #f4f6f8;
     color: #333;
-    max-width: 800px;
-    margin: 0 auto;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 700px;
+    margin: 50px auto;
     padding: 20px;
 }
 
-/* Page title */
+/* Heading */
 h1 {
     text-align: center;
-    color: #007bff;
-    margin-bottom: 25px;
+    color: #1f2937;
+    margin-bottom: 30px;
 }
 
-/* Form inputs */
-input, textarea {
+/* Form styling */
+.idea-form {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 8px;  /* slightly reduced */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+.form-row {
+    margin-bottom: 15px;
+}
+
+input[type="text"],
+textarea {
     width: 100%;
-    padding: 12px 10px;
-    margin-bottom: 12px;
+    padding: 12px;
+    border-radius: 6px;
     border: 1px solid #ccc;
-    border-radius: 6px; /* slightly smaller radius */
-    box-sizing: border-box;
     font-size: 1rem;
-    transition: border-color 0.2s ease-in-out;
+    box-sizing: border-box;
+    transition: border 0.2s, box-shadow 0.2s;
 }
 
-input:focus, textarea:focus {
-    border-color: #007bff;
+input[type="text"]:focus,
+textarea:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
     outline: none;
 }
 
-/* Submit button */
-button {
+textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* Button */
+.submit-btn {
     width: 100%;
     padding: 12px;
-    background-color: #007bff;
+    background-color: #4f46e5;
     color: white;
     border: none;
     border-radius: 6px;
+    font-size: 1.1rem;
     cursor: pointer;
-    font-size: 1rem;
-    transition: background-color 0.2s ease-in-out;
+    transition: background-color 0.2s;
 }
 
-button:hover {
-    background-color: #0056b3;
+.submit-btn:hover {
+    background-color: #4338ca;
 }
 
-/* Result container */
-#result {
-    margin-top: 20px;
+/* Result card */
+.result-card {
+    margin-top: 30px;
+    background: #ffffff;
+    border-radius: 8px;
     padding: 20px;
-    background-color: #fff;
-    border-radius: 6px; /* slightly smaller radius */
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    line-height: 1.5;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    white-space: pre-wrap; /* keep line breaks */
+    font-family: 'Courier New', Courier, monospace;
 }
 
-/* Highlight titles inside results */
-#result h2 {
+.result-card h2 {
     margin-top: 0;
-    color: #007bff;
+    color: #111827;
 }
 
-/* Make paragraphs in result stand out */
-#result p {
-    margin: 6px 0;
-}
-
-/* Responsive adjustments */
-@media (max-width: 600px) {
-    body {
-        padding: 10px;
-    }
-    input, textarea, button {
-        font-size: 0.95rem;
-    }
+.result-card p {
+    margin: 5px 0;
 }

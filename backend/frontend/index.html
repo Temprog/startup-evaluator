@@ -2,54 +2,29 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Startup Idea Evaluator</title>
 <link rel="stylesheet" href="/static/style.css">
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    max-width: 800px;
-    margin: auto;
-    padding: 20px;
-    background: #f8f9fa;
-  }
-  input, textarea, button {
-    width: 100%;
-    margin-bottom: 10px;
-    padding: 10px;
-    border-radius: 6px; /* slightly smaller */
-    border: 1px solid #ccc;
-    box-sizing: border-box;
-  }
-  button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    cursor: pointer;
-  }
-  button:hover {
-    background-color: #0056b3;
-  }
-  #result {
-    margin-top: 20px;
-    padding: 15px;
-    background-color: #fff;
-    border-radius: 6px; /* slightly smaller */
-    box-shadow: 0 0 5px rgba(0,0,0,0.1);
-  }
-</style>
 </head>
 <body>
-<h1>Startup Idea Evaluator</h1>
+<div class="container">
+    <h1>Startup Idea Evaluator</h1>
 
-<form id="ideaForm">
-  <input type="text" name="name" placeholder="Your Name" required />
-  <input type="text" name="role" placeholder="Your Role / Background" required />
-  <input type="text" name="title" placeholder="Idea Title" required />
-  <textarea name="feedback" placeholder="Your Idea / Feedback..." rows="4" required></textarea>
-  <button type="submit">Submit</button>
-</form>
+    <form id="ideaForm" class="idea-form">
+        <div class="form-row">
+            <input type="text" name="name" placeholder="Your Name / Role" required>
+        </div>
+        <div class="form-row">
+            <input type="text" name="title" placeholder="Idea Title" required>
+        </div>
+        <div class="form-row">
+            <textarea name="feedback" placeholder="Describe your idea..." required></textarea>
+        </div>
+        <button type="submit" class="submit-btn">Submit</button>
+    </form>
 
-<div id="result"></div>
+    <div id="result" class="result-card"></div>
+</div>
 
 <script src="/static/main.js"></script>
 </body>
