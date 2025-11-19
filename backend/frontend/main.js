@@ -1,9 +1,10 @@
-document.getElementById("ideaForm").addEventListener("submit", async (e) => { 
+document.getElementById("ideaForm").addEventListener("submit", async (e) => {
   e.preventDefault();
+
   const data = Object.fromEntries(new FormData(e.target));
 
   const resultDiv = document.getElementById("result");
-  resultDiv.innerHTML = "<p>Processing your idea...</p>";
+  resultDiv.innerHTML = "Processing...";
 
   try {
     const res = await fetch("/api/submit", {
@@ -12,27 +13,30 @@ document.getElementById("ideaForm").addEventListener("submit", async (e) => {
       body: JSON.stringify(data)
     });
 
-    const result = await res.json();
+    if (!res.ok) {
+      throw new Error(`Backend error: ${await res.text()}`);
+    }
 
-    if(result.status !== "success") {
-      resultDiv.innerHTML = `<p style="color:red;">Error at step: ${result.step} - ${result.error}</p>`;
+    const json = await res.json();
+
+    if(json.status !== "success") {
+      resultDiv.innerHTML = `<p style="color:red;">Error: ${json.error || "Unknown error"}</p>`;
       return;
     }
 
-    // Render nicely formatted HTML
+    // Display nicely
     resultDiv.innerHTML = `
-      <h2>${result.ai_idea_emoji} ${data.title}</h2>
-      <p>Submitted by: <strong>${data.name}</strong></p>
-      <p>Sentiment: ${result.ai_sentiment_emoji} ${result.ai_sentiment}</p>
-      <div class="ai-summary">${result.ai_summary.replace(/\n/g, "<br>")}</div>
+      <h2>${json.ai_idea_emoji} ${data.title}</h2>
+      <p><strong>Your Name:</strong> ${data.name}</p>
+      <p><strong>Your Role / Background:</strong> ${data.role}</p>
+      <p><strong>AI Sentiment:</strong> ${json.ai_sentiment_emoji} (${json.ai_sentiment})</p>
+      <div>${json.ai_summary.replace(/\n/g, "<br>")}</div>
     `;
-
-    // Scroll to result
-    resultDiv.scrollIntoView({ behavior: "smooth" });
 
     e.target.reset();
 
-  } catch(err) {
+  } catch (err) {
+    console.error(err);
     resultDiv.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
   }
 });

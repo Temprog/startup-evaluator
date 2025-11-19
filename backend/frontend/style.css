@@ -1,24 +1,81 @@
-form {
-  max-width: 600px;
-  margin-bottom: 20px;
+/* Base body */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f6f8;
+    color: #333;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
 }
 
-textarea {
-  width: 100%;
-  margin-top: 8px;
-  margin-bottom: 12px;
+/* Page title */
+h1 {
+    text-align: center;
+    color: #007bff;
+    margin-bottom: 25px;
 }
 
-.result-container {
-  max-width: 600px;
-  padding: 15px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  background-color: #f9f9f9;
+/* Form inputs */
+input, textarea {
+    width: 100%;
+    padding: 12px 10px;
+    margin-bottom: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px; /* slightly smaller radius */
+    box-sizing: border-box;
+    font-size: 1rem;
+    transition: border-color 0.2s ease-in-out;
 }
 
-.ai-summary {
-  white-space: pre-wrap;
-  line-height: 1.5;
-  margin-top: 10px;
+input:focus, textarea:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+/* Submit button */
+button {
+    width: 100%;
+    padding: 12px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.2s ease-in-out;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+/* Result container */
+#result {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 6px; /* slightly smaller radius */
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    line-height: 1.5;
+}
+
+/* Highlight titles inside results */
+#result h2 {
+    margin-top: 0;
+    color: #007bff;
+}
+
+/* Make paragraphs in result stand out */
+#result p {
+    margin: 6px 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    body {
+        padding: 10px;
+    }
+    input, textarea, button {
+        font-size: 0.95rem;
+    }
 }

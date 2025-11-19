@@ -4,19 +4,52 @@
 <meta charset="UTF-8">
 <title>Startup Idea Evaluator</title>
 <link rel="stylesheet" href="/static/style.css">
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    max-width: 800px;
+    margin: auto;
+    padding: 20px;
+    background: #f8f9fa;
+  }
+  input, textarea, button {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 6px; /* slightly smaller */
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+  }
+  button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  button:hover {
+    background-color: #0056b3;
+  }
+  #result {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #fff;
+    border-radius: 6px; /* slightly smaller */
+    box-shadow: 0 0 5px rgba(0,0,0,0.1);
+  }
+</style>
 </head>
 <body>
 <h1>Startup Idea Evaluator</h1>
 
 <form id="ideaForm">
   <input type="text" name="name" placeholder="Your Name" required />
+  <input type="text" name="role" placeholder="Your Role / Background" required />
   <input type="text" name="title" placeholder="Idea Title" required />
-  <textarea name="feedback" placeholder="Describe your idea..." rows="3" required></textarea>
-  <textarea name="details" placeholder="Additional details (optional)" rows="3"></textarea>
+  <textarea name="feedback" placeholder="Your Idea / Feedback..." rows="4" required></textarea>
   <button type="submit">Submit</button>
 </form>
 
-<div id="result" class="result-container"></div>
+<div id="result"></div>
 
 <script src="/static/main.js"></script>
 </body>
