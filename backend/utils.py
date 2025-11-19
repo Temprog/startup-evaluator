@@ -3,22 +3,16 @@ import json
 import httpx
 from supabase import create_client, Client
 
-# Environment variables
+# Env vars
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK")
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 
-# Initialize Supabase client
+# Supabase client
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 async def process_idea(data: dict):
-    """
-    Process a startup idea:
-    1. Call AI (Claude 3)
-    2. Save to Supabase
-    3. Notify Discord (optional)
-    """
 
     ai_summary = ""
     ai_sentiment = "neutral"
@@ -26,22 +20,36 @@ async def process_idea(data: dict):
     ai_idea_emoji = "💡"
     ai_result = {}
 
-    # 1️⃣ Call Claude 3
+    # 1️⃣ Anthropic Claude 3.5 API CALL (FULLY CORRECT)
     try:
-        prompt = f"Analyze this startup idea:\n{json.dumps(data)}"
-        headers = {"Authorization": f"Bearer {ANTHROPIC_API_KEY}"}
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(
-                "https://api.anthropic.com/v1/complete",
-                headers=headers,
+                "https://api.anthropic.com/v1/messages",
+                headers={
+                    "x-api-key": ANTHROPIC_API_KEY,
+                    "anthropic-version": "2023-06-01",
+                    "Content-Type": "application/json"
+                },
                 json={
-                    "model": "claude-3",
-                    "prompt": prompt,
-                    "max_tokens_to_sample": 300
+                    "model": "claude-3-5-sonnet-latest",
+                    "max_tokens": 300,
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": f"Analyze this startup idea:\n{json.dumps(data)}"
+                        }
+                    ]
                 }
             )
+
             ai_result = resp.json()
-            ai_summary = ai_result.get("completion", "")  # ✅ fixed
+
+            # extract text safely
+            if "content" in ai_result and len(ai_result["content"]) > 0:
+                ai_summary = ai_result["content"][0].get("text", "")
+            else:
+                ai_summary = "No response from AI."
+
     except Exception as e:
         return {"status": "error", "step": "AI", "error": str(e)}
 
@@ -59,7 +67,7 @@ async def process_idea(data: dict):
     except Exception as e:
         return {"status": "error", "step": "Supabase insert", "error": str(e)}
 
-    # 3️⃣ Notify Discord webhook (optional)
+    # 3️⃣ Discord webhook (optional)
     if DISCORD_WEBHOOK:
         try:
             async with httpx.AsyncClient() as client:
