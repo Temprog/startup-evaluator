@@ -1,36 +1,38 @@
-document.getElementById("ideaForm").addEventListener("submit", async (e) => {
+document.getElementById("ideaForm").addEventListener("submit", async (e) => { 
   e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target));
 
-  const name = document.getElementById("name").value;
-  const title = document.getElementById("title").value;
-  const feedback = document.getElementById("feedback").value;
+  const resultDiv = document.getElementById("result");
+  resultDiv.innerHTML = "<p>Processing your idea...</p>";
 
-  const btn = document.getElementById("submitBtn");
-  btn.innerText = "⏳ Evaluating...";
-  btn.disabled = true;
+  try {
+    const res = await fetch("/api/submit", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(data)
+    });
 
-  const res = await fetch("/api/submit", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ name, title, feedback })
-  });
+    const result = await res.json();
 
-  const data = await res.json();
-  const resultBox = document.getElementById("result");
+    if(result.status !== "success") {
+      resultDiv.innerHTML = `<p style="color:red;">Error at step: ${result.step} - ${result.error}</p>`;
+      return;
+    }
 
-  resultBox.classList.remove("hidden");
-
-  if (data.status === "success") {
-    resultBox.innerHTML = `
-      <h2>🔥 AI Summary</h2>
-      <p>${data.ai_sentiment_emoji} Sentiment: <b>${data.ai_sentiment}</b></p>
-      <hr/>
-      <div>${data.ai_summary}</div>
+    // Render nicely formatted HTML
+    resultDiv.innerHTML = `
+      <h2>${result.ai_idea_emoji} ${data.title}</h2>
+      <p>Submitted by: <strong>${data.name}</strong></p>
+      <p>Sentiment: ${result.ai_sentiment_emoji} ${result.ai_sentiment}</p>
+      <div class="ai-summary">${result.ai_summary.replace(/\n/g, "<br>")}</div>
     `;
-  } else {
-    resultBox.innerHTML = `<p style="color:red;">Error: ${data.error}</p>`;
-  }
 
-  btn.innerText = "✨ Evaluate Idea";
-  btn.disabled = false;
+    // Scroll to result
+    resultDiv.scrollIntoView({ behavior: "smooth" });
+
+    e.target.reset();
+
+  } catch(err) {
+    resultDiv.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+  }
 });
