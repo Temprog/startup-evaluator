@@ -3,10 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Startup Idea Evaluator</title>
-
-<!-- FIX: Serve assets from /static -->
 <link rel="stylesheet" href="/static/style.css">
-
 </head>
 <body>
 <h1>Startup Idea Evaluator</h1>
@@ -14,14 +11,13 @@
 <form id="ideaForm">
   <input type="text" name="name" placeholder="Your Name" required />
   <input type="text" name="title" placeholder="Idea Title" required />
-  <textarea name="feedback" placeholder="Your Idea..." required></textarea>
+  <textarea name="feedback" placeholder="Describe your idea..." rows="3" required></textarea>
+  <textarea name="details" placeholder="Additional details (optional)" rows="3"></textarea>
   <button type="submit">Submit</button>
 </form>
 
-<pre id="result"></pre>
+<div id="result" class="result-container"></div>
 
-<!-- FIX: Load JS from /static -->
 <script src="/static/main.js"></script>
-
 </body>
 </html>
