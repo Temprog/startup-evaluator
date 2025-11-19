@@ -3,16 +3,23 @@ import json
 import httpx
 from supabase import create_client, Client
 
-# Env vars
+# Environment variables
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK")
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 
-# Supabase client
+# Initialize Supabase client
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 async def process_idea(data: dict):
+    """
+    Process a startup idea:
+    1️⃣ Call Anthropic Claude 3.5 API
+    2️⃣ Extract summary and sentiment
+    3️⃣ Save to Supabase
+    4️⃣ Optional: Notify Discord webhook
+    """
 
     ai_summary = ""
     ai_sentiment = "neutral"
@@ -20,8 +27,10 @@ async def process_idea(data: dict):
     ai_idea_emoji = "💡"
     ai_result = {}
 
-    # 1️⃣ Anthropic Claude 3.5 API CALL (FULLY CORRECT)
+    # 1️⃣ Call Anthropic API
     try:
+        prompt = f"Analyze this startup idea:\n{json.dumps(data)}"
+
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(
                 "https://api.anthropic.com/v1/messages",
@@ -33,28 +42,37 @@ async def process_idea(data: dict):
                 json={
                     "model": "claude-sonnet-4-5-20250929",
                     "max_tokens": 4096,
-                    "temperature": 0.7,          # optional, but recommended
+                    "temperature": 0.7,
                     "messages": [
-                        {
-                            "role": "user",
-                            "content": f"Analyze this startup idea:\n{json.dumps(data)}"
-                        }
+                        {"role": "user", "content": prompt}
                     ]
                 }
             )
 
             ai_result = resp.json()
 
-            # extract text safely
+            # Extract AI summary safely
             if "content" in ai_result and len(ai_result["content"]) > 0:
-                ai_summary = ai_result["content"][0].get("text", "")
+                ai_summary = ai_result["content"][0].get("text", "No response from AI.")
             else:
                 ai_summary = "No response from AI."
 
     except Exception as e:
         return {"status": "error", "step": "AI", "error": str(e)}
 
-    # 2️⃣ Save to Supabase
+    # 2️⃣ Optional: Simple sentiment detection based on keywords
+    sentiment_lower = ai_summary.lower()
+    if any(word in sentiment_lower for word in ["good", "great", "positive", "excellent"]):
+        ai_sentiment = "positive"
+        ai_sentiment_emoji = "🔥"
+    elif any(word in sentiment_lower for word in ["bad", "poor", "negative", "fail"]):
+        ai_sentiment = "negative"
+        ai_sentiment_emoji = "⚠️"
+    else:
+        ai_sentiment = "neutral"
+        ai_sentiment_emoji = "😐"
+
+    # 3️⃣ Save to Supabase
     try:
         supabase.table("ideas").insert({
             "name": data["name"],
@@ -68,7 +86,7 @@ async def process_idea(data: dict):
     except Exception as e:
         return {"status": "error", "step": "Supabase insert", "error": str(e)}
 
-    # 3️⃣ Discord webhook (optional)
+    # 4️⃣ Optional: Discord webhook notification
     if DISCORD_WEBHOOK:
         try:
             async with httpx.AsyncClient() as client:
@@ -78,6 +96,7 @@ async def process_idea(data: dict):
         except Exception as e:
             return {"status": "error", "step": "Discord webhook", "error": str(e)}
 
+    # ✅ Return structured response
     return {
         "status": "success",
         "ai_summary": ai_summary,
