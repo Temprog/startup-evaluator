@@ -1,35 +1,44 @@
-document.getElementById("ideaForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
+const form = document.getElementById("ideaForm");
+const resultDiv = document.getElementById("result");
+const btn = document.getElementById("submitBtn");
 
-    const data = Object.fromEntries(new FormData(e.target));
-    const resultDiv = document.getElementById("result");
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-    resultDiv.innerHTML = "<p>Processing...</p>";
+  const data = Object.fromEntries(new FormData(e.target));
 
-    try {
-        const res = await fetch("/api/submit", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify(data)
-        });
+  // Show processing state
+  resultDiv.innerHTML = "<p>⏳ Evaluating your idea...</p>";
+  btn.innerText = "⏳ Evaluating...";
+  btn.disabled = true;
 
-        const result = await res.json();
+  try {
+    const res = await fetch("/api/submit", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(data)
+    });
 
-        if(result.status === "success") {
-            resultDiv.innerHTML = `
-                <h2>${result.ai_idea_emoji} ${data.title}</h2>
-                <p><strong>Submitted by:</strong> ${data.name}</p>
-                <p><strong>Feedback / Idea:</strong> ${data.feedback}</p>
-                <p><strong>AI Sentiment:</strong> ${result.ai_sentiment_emoji} ${result.ai_sentiment}</p>
-                <pre>${result.ai_summary}</pre>
-            `;
-        } else {
-            resultDiv.innerHTML = `<p style="color:red;">Error: ${result.error || 'Unknown error'}</p>`;
-        }
+    const result = await res.json();
 
-        e.target.reset();
-
-    } catch (err) {
-        resultDiv.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+    if(result.status === "success") {
+      resultDiv.innerHTML = `
+        <h2>${result.ai_idea_emoji} ${data.title}</h2>
+        <p><strong>Submitted by:</strong> ${data.name}</p>
+        <p><strong>Role / Background:</strong> ${data.role}</p>
+        <p><strong>Feedback / Idea:</strong> ${data.feedback}</p>
+        <p><strong>AI Sentiment:</strong> ${result.ai_sentiment_emoji} ${result.ai_sentiment}</p>
+        <pre>${result.ai_summary}</pre>
+      `;
+    } else {
+      resultDiv.innerHTML = `<p style="color:red;">Error: ${result.error || 'Unknown error'}</p>`;
     }
+
+    e.target.reset();
+  } catch (err) {
+    resultDiv.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+  } finally {
+    btn.innerText = "✨ Evaluate Idea";
+    btn.disabled = false;
+  }
 });

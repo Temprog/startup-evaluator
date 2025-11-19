@@ -1,31 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Startup Idea Evaluator</title>
-<link rel="stylesheet" href="/static/style.css">
+  <meta charset="UTF-8">
+  <title>🚀 Startup Idea Evaluator</title>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-<div class="container">
-    <h1>Startup Idea Evaluator</h1>
+  <div class="container">
+    <h1>🚀 Startup Idea Evaluator</h1>
 
-    <form id="ideaForm" class="idea-form">
-        <div class="form-row">
-            <input type="text" name="name" placeholder="Your Name / Role" required>
-        </div>
-        <div class="form-row">
-            <input type="text" name="title" placeholder="Idea Title" required>
-        </div>
-        <div class="form-row">
-            <textarea name="feedback" placeholder="Describe your idea..." required></textarea>
-        </div>
-        <button type="submit" class="submit-btn">Submit</button>
+    <form id="ideaForm">
+      <!-- Name -->
+      <input type="text" name="name" placeholder="Your Name" required>
+
+      <!-- Idea Title + Role/Background (split 50/50) -->
+      <div class="row">
+        <input type="text" name="title" placeholder="Idea Title" required>
+        <input type="text" name="role" placeholder="Your Role / Background" required>
+      </div>
+
+      <!-- Feedback / Idea -->
+      <textarea name="feedback" placeholder="Describe your startup idea..." required></textarea>
+
+      <!-- Submit -->
+      <button type="submit" id="submitBtn">✨ Evaluate Idea</button>
     </form>
 
-    <div id="result" class="result-card"></div>
-</div>
+    <!-- Result -->
+    <div id="result"></div>
+  </div>
 
-<script src="/static/main.js"></script>
+  <script src="/static/main.js"></script>
 </body>
 </html>
