@@ -1,24 +1,59 @@
-form {
+body {
+  font-family: Arial, sans-serif;
+  background: #f5f5f9;
+  padding: 40px;
+}
+
+.container {
   max-width: 600px;
+  margin: auto;
+}
+
+.title {
+  text-align: center;
   margin-bottom: 20px;
 }
 
-textarea {
+.card {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+input, textarea {
   width: 100%;
-  margin-top: 8px;
-  margin-bottom: 12px;
+  padding: 10px;
+  margin: 8px 0 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
 }
 
-.result-container {
-  max-width: 600px;
-  padding: 15px;
-  border: 1px solid #ccc;
+button {
+  width: 100%;
+  padding: 12px;
+  background: #4a6cff;
+  color: white;
+  font-size: 16px;
+  border: none;
   border-radius: 8px;
-  background-color: #f9f9f9;
+  cursor: pointer;
+  transition: 0.2s;
 }
 
-.ai-summary {
-  white-space: pre-wrap;
-  line-height: 1.5;
+button:hover {
+  background: #3a57d9;
+}
+
+.result {
+  background: white;
+  padding: 20px;
   margin-top: 10px;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  white-space: pre-wrap;
+}
+
+.hidden {
+  display: none;
 }
