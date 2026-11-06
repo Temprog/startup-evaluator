@@ -3,11 +3,6 @@ A web app that takes submitted startup ideas and uses Claude to prepare a struct
 
 
 ## Features
-- Submit idea via frontend form
-- AI-generated summary & sentiment (Claude 3)
-- Store submissions in Supabase
-- Discord webhook notifications
-- 
 - Idea submission through a frontend form
 - AI-generated summary of each idea
 - Refined version of the idea, rewritten more clearly
